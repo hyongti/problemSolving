@@ -19,40 +19,96 @@ const updownCount = (name) => {
 };
 
 const leftrightCount = (name) => {
-  const { aLength, index } = maxRepeatA(name);
-  // 한번 방향이 바뀌면 그대로 쭉 가야 함.
-  // 반복되는 (A의 개수 + 1)이 내가 돌아가야하는 길보다 커야 함.
-  // 즉, 다음 식이 성립하면 돌아가는 게 더 좋다.
-  // i + {name.length - (i + repeatA)} < repeatA + 1
-  // 5 + (17 - 5 - 8) 1을 더 빼야하는구나..
-  //  위 식을 정리하면,
-  // i + name.length - i - repeatA - 1 < repeatA + 1
-  // 즉, name.length < 2 * repeatA + 2 이면
-  // leftRightCount는 i + {name.length - (i + repeatA)}
-  // 그렇지 않으면 그냥 name.length - 1 리턴하면 됨!
-  //   console.log(aLength, index);
-  if (name.length < 2 * aLength + 2) {
-    return name.length - index - aLength;
-  } else {
-    let lastACount = 0;
-    for (let i = name.length - 1; name[i] === "A"; --i) {
-      lastACount += 1;
+  const isCheck = [];
+  for (let i = 0; i < name.length; ++i) {
+    name[i] === "A" ? isCheck.push(true) : isCheck.push(false);
+  }
+  let i = 0;
+  let count = 0;
+  let direction;
+  while (true) {
+    if (isCheck[i] === false) {
+      isCheck[i] = true;
     }
-    return name.length - 1 - lastACount;
+    if (isCheck.indexOf(false) === -1) return count;
+    // 오른쪽 왼쪽 어디로 갈지
+    const { leftCount, rightCount } = repeatTrue(isCheck, i);
+    // let direction = leftCount < rightCount ? -leftCount : rightCount;
+    if (leftCount < rightCount) {
+      direction = -leftCount;
+    } else if (leftCount > rightCount) {
+      direction = rightCount;
+    } else {
+      const { leftCount, rightCount } = repeatFalse(isCheck, i);
+      direction = leftCount < rightCount ? -1 : 1;
+    }
+    // 실제 이동
+    i += direction;
+    if (i > isCheck.length - 1) {
+      i -= isCheck.length;
+    } else if (i < 0) {
+      i += isCheck.length;
+    }
+    count += Math.abs(direction);
   }
 };
 
-const maxRepeatA = (name) => {
-  const aArr = Array.from({ length: name.length }, () => "A");
-  for (; aArr.length > 0; aArr.pop()) {
-    if (name.indexOf(aArr.join("")) !== -1) {
-      return { aLength: aArr.length, index: name.indexOf(aArr.join("")) };
+const repeatTrue = (isCheck, index) => {
+  let rightCount = 1;
+  for (
+    let i = index + 1 > isCheck.length - 1 ? 0 : index + 1;
+    isCheck[i] === true;
+    ++i
+  ) {
+    if (i > isCheck.length - 1) {
+      i = 0;
     }
+    ++rightCount;
   }
-  return {};
+  let leftCount = 1;
+  for (
+    let i = index - 1 > 0 ? index - 1 : isCheck.length - 1;
+    isCheck[i] === true;
+    --i
+  ) {
+    if (i < 0) {
+      i = isCheck.length - 1;
+    }
+    ++leftCount;
+  }
+  return { leftCount, rightCount };
+};
+
+const repeatFalse = (isCheck, index) => {
+  let rightCount = 0;
+  for (
+    let i = index + 1 > isCheck.length - 1 ? 0 : index + 1;
+    isCheck[i] === false;
+    ++i
+  ) {
+    if (i > isCheck.length - 1) {
+      i = 0;
+    }
+    ++rightCount;
+  }
+  let leftCount = 0;
+  for (
+    let i = index - 1 > 0 ? index - 1 : isCheck.length - 1;
+    isCheck[i] === false;
+    --i
+  ) {
+    if (i < 0) {
+      i = isCheck.length - 1;
+    }
+    ++leftCount;
+  }
+  return { leftCount, rightCount };
 };
 
 console.log(solution("JEROEN"));
 console.log(solution("JAN"));
+console.log(solution("ABAAAAAAAAABB"));
 console.log(solution("AAAABABAAAA"));
-console.log(solution("AAAABAB"));
+console.log(solution("AAA"));
+console.log(solution("BBBBAAAB"));
+console.log(solution("ABABA"));
